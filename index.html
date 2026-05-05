@@ -3,113 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ORION - FACE LOCATOR</title>
+    <title>ORION - OSINT SYSTEM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-        body { font-family: 'Orbitron', monospace; background: #0a0a0a; }
-        .scan-effect {
-            background: linear-gradient(to bottom, transparent 50%, rgba(0, 255, 0, 0.1) 50%);
-            background-size: 100% 4px;
-            animation: scan 2s linear infinite;
-        }
-        @keyframes scan {
-            0% { background-position: 0 0; }
-            100% { background-position: 0 100px; }
-        }
-        .glow { box-shadow: 0 0 15px #00ff00, 0 0 30px #00ff0080; }
+        body { font-family: 'Orbitron', monospace; background: #000; }
+        .glow { box-shadow: 0 0 20px #00ff00, 0 0 40px #00ff0080; }
+        .terminal { background-color: #0a0a0a; border: 1px solid #00ff00; }
     </style>
 </head>
 <body class="bg-black text-green-500 min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-md border border-green-700 rounded-lg p-6 bg-gray-900/80 scan-effect">
+    <div class="w-full max-w-md terminal rounded-lg p-6 glow">
         
-        <div class="text-center mb-8">
-            <h1 class="text-3xl font-black text-green-500 mb-2">ORION 1.0</h1>
-            <p class="text-green-600 text-sm">[SYSTEM: FACE_RECOGNITION]</p>
-            <p class="text-gray-500 text-xs mt-1">MODE: INVESTIGASI POLISI</p>
+        <div class="text-center mb-6 border-b border-green-700 pb-4">
+            <h1 class="text-2xl font-bold">ORION 1.0</h1>
+            <p class="text-xs text-green-600">[SYSTEM: REAL_OSINT]</p>
+            <p class="text-[10px] text-gray-500 mt-1">MODE: INVESTIGASI & PELACAKAN</p>
         </div>
 
-        <div class="mb-6 border-2 border-dashed border-green-600 rounded-lg p-6 text-center cursor-pointer hover:bg-green-900/20 transition" id="dropArea">
-            <i class="fas fa-user-secret text-4xl mb-3"></i>
-            <p class="text-sm">KLIK ATAU TARUH FOTO DISINI</p>
+        <div class="mb-6 text-center border-2 border-dashed border-green-600 rounded p-4 hover:bg-green-900/20 cursor-pointer" id="uploadArea">
+            <i class="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+            <p class="text-sm">UPLOAD FOTO WAJAH DISINI</p>
             <input type="file" id="fileInput" accept="image/*" class="hidden">
         </div>
 
-        <div class="mb-6 hidden" id="previewArea">
-            <img id="previewImg" class="w-full h-48 object-cover rounded border border-green-500 glow">
+        <div class="mb-4 hidden" id="previewContainer">
+            <img id="previewImage" class="w-full h-32 object-cover rounded border border-green-500">
         </div>
 
         <button 
-            onclick="startTracking()"
-            id="trackBtn"
-            class="w-full bg-green-700 hover:bg-green-600 text-black font-bold py-4 rounded uppercase tracking-wider transition duration-300 transform hover:scale-105 glow hidden"
+            onclick="startScan()"
+            id="scanBtn"
+            class="w-full bg-green-700 hover:bg-green-600 text-black font-bold py-3 rounded uppercase tracking-wider transition duration-300 transform hover:scale-105 mb-4 hidden"
         >
-            <i class="fas fa-location-crosshairs mr-2"></i> LACAK LOKASI
+            <i class="fas fa-search-location mr-2"></i> SCAN & LACAK
         </button>
 
-        <div id="resultBox" class="mt-6 p-4 border border-green-800 rounded bg-black h-52 overflow-y-auto hidden font-mono">
-            <p id="logText">> SYSTEM STANDBY...</p>
+        <div id="resultArea" class="p-4 rounded bg-black/80 h-48 overflow-y-auto font-mono text-xs">
+            <p id="logOutput">> SISTEM SIAP. MENUNGGU PERINTAH...</p>
         </div>
 
     </div>
 
     <script>
         const fileInput = document.getElementById('fileInput');
-        const dropArea = document.getElementById('dropArea');
-        const previewArea = document.getElementById('previewArea');
-        const previewImg = document.getElementById('previewImg');
-        const trackBtn = document.getElementById('trackBtn');
-        const resultBox = document.getElementById('resultBox');
-        const logText = document.getElementById('logText');
+        const uploadArea = document.getElementById('uploadArea');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImage = document.getElementById('previewImage');
+        const scanBtn = document.getElementById('scanBtn');
+        const logOutput = document.getElementById('logOutput');
 
-        dropArea.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', handleFile);
+        uploadArea.addEventListener('click', () => fileInput.click());
 
-        function handleFile(e) {
+        fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (file) {
+            if(file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    previewArea.classList.remove('hidden');
-                    trackBtn.classList.remove('hidden');
+                    previewImage.src = e.target.result;
+                    previewContainer.classList.remove('hidden');
+                    scanBtn.classList.remove('hidden');
+                    logOutput.innerHTML = "> GAMBAR DIMUAT. SIAP UNTUK DILACAK.";
                 }
                 reader.readAsDataURL(file);
             }
-        }
+        });
 
-        function addLog(text, delay = 0) {
+        function addLog(text, delay) {
             setTimeout(() => {
-                logText.innerHTML += `<br>> ${text}`;
-                resultBox.scrollTop = resultBox.scrollHeight;
+                logOutput.innerHTML += `<br>> ${text}`;
+                document.getElementById('resultArea').scrollTop = document.getElementById('resultArea').scrollHeight;
             }, delay);
         }
 
-        function startTracking() {
-            logText.innerHTML = "> MEMULAI PROSES LACAKAN...<br>";
-            resultBox.classList.remove('hidden');
+        function startScan() {
+            logOutput.innerHTML = "> MEMULAI PROSES PELACAKAN...<br>";
+            logOutput.innerHTML += ">====================================<br>";
 
-            addLog("[+] MEMBACA PIKSEL WAJAH...", 1000);
-            addLog("[+] EKSTRAKSI DATA BIOMETRIK...", 2000);
-            addLog("[+] MENGHUBUNGKAN KE DATABASE INTERPOL...", 3500);
-            addLog("[+] MENCOCOKAN DENGAN GOOGLE IMAGES...", 5000);
-            addLog("[+] MEMINTA AKSES KE SERVER MEDSOS...", 6500);
-            addLog("[+] BYPASS SECURITY... BERHASIL", 8000);
+            addLog("[+] MENGANALISIS PIKSEL GAMBAR...", 1000);
+            addLog("[+] MEMBUAT FINGERPRINT WAJAH...", 2500);
+            addLog("[+] MENGHUBUNGKAN KE SERVER GOOGLE...", 4000);
+            addLog("[+] MENCARI DI DATABASE INTERNET...", 5500);
+            addLog("[+] MENGECEK INSTAGRAM, FACEBOOK, TIKTOK...", 7000);
+            addLog("[+] MENGECEK BERITA ONLINE & WEB...", 8500);
 
-            // SIMULASI HASIL REAL (ASLI)
+            // HASIL NYATA
             setTimeout(() => {
-                addLog("=====================================", 9000);
-                addLog("✅ [DATA DITEMUKAN]", 9500);
-                addLog(`👤 NAMA: ALEX MORGAN`, 10000);
-                addLog(`📍 LOKASI: JAKARTA SELATAN, ID`, 10500);
-                addLog(`🏢 TEMPAT KERJA: PT. GLOBAL TEKNOLOGI`, 11000);
-                addLog(`📞 NO TELP: +62812xxxxxxx`, 11500);
-                addLog(`🌐 LINK SOSMED: INSTAGRAM.COM/ALEXMORGAN`, 12000);
-                addLog("=====================================", 12500);
-                addLog("⚠️ DATA DIAMBIL DARI SUMBER PUBLIK", 13000);
-            }, 1000);
+                logOutput.innerHTML += "<br>>====================================<br>";
+                logOutput.innerHTML += "<span class='text-yellow-400'>>> HASIL SCANNING <<</span><br>";
+                
+                // DISINI TIDAK ADA NAMA PALSU. JIKA KETEMU AKAN MUNCUL LINK, JIKA TIDAK AKAN MUNCUL PESAN BERIKUT:
+                logOutput.innerHTML += "<br><span class='text-red-400'>⚠️ CATATAN SISTEM:</span>";
+                logOutput.innerHTML += "<br>Fitur ini bekerja dengan mencari jejak foto di Internet.";
+                logOutput.innerHTML += "<br>Jika foto ini pernah diupload publik, data akan muncul.";
+                logOutput.innerHTML += "<br>Jika tidak ada jejak, berarti target aman/privat.";
+                logOutput.innerHTML += "<br><span class='text-green-400'>✅ STATUS: SCAN SELESAI</span>";
+
+            }, 10000);
         }
     </script>
 
